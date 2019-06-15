@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <title>joyful dev log #1</title>
+  <meta name="viewport" content="width=device-width">
+  <link rel=icon href=data:,>
+  <link rel="stylesheet" href="../post.css">
+</head>
+<body>
+<main>
+  <header>
+    <h2>a barebones linux kernel</h2>
+    <p>a minimum starting point for a desktop linux environment, i think, would be a kernel that loads a tiny initramfs which drops the user into a shell. first, let's build that kernel.</p>
+  </header>
+  <article>
+  <section>
+    <h3>building the kernel</h3>
+    <p>in 2019 we have nice things like docker, and alpine linux can build the kernel just fine with <code>make gcc libc-dev linux-headers bison flex bc xz</code>. you'll also need <code>ncurses-dev</code> to <code>make menuconfig</code>. create a barebones <code>.config</code> with <code>make allnoconfig</code> or <a href="https://tiny.wiki.kernel.org/"><code>make tinyconfig</code></a>, which, mostly transparent to our purposes, produces a config that results in even smaller kernels (< 1 MiB!)</p>
+    <p>the good thing about starting out with nothing in an exercise like this is that we get to add things only as we discover that they are needed, which is conducive to maximum learning. in particular, to meet our requirements, we'll need to enable:</p>
+    <ul>
+      <li>64-bit</li>
+      <li>initramfs support (xz compression only)</li>
+        <ul>
+          <li><i>me from the future:</i> i found that xz results in a better compression ratio than the popular gzip for the initramfs. the tinyconfig kernel is also xz-compressed, so i *think* this would just be reusing existing functionality.</li>
+        </ul>
+      <li>elf + shebang support</li>
+        <ul>
+          <li><i>me from the future:</i> as you'll see later, our initramfs <code>init</code> is a shell script. did you know shebang support is actually a configurable kernel feature?</li>
+        </ul>
+      <li>printk and 8250/16550 serial console (enable tty first to reveal this option)</li>
+        <ul>
+          <li>this is the magic that gives the kernel the ability to talk UART serial.</li>
+          <li>tty/console also implies input, but honestly i don't know anything about hardware and have so many questions<sup><a href="#fn1">1</a></sup>.</li>
+        </ul>
+    </ul>
+  </section>
+  <section>
+    <h3>booting the kernel</h3>
+    <p>thankfully in 2019 there are nice things like qemu, so a total amateur like me doesn't have to worry about bootloader firmware, and hardware. at this point the kernel already boots:<p>
+<pre>    qemu-system-x86_64 -kernel bzImage</pre>
+    <p>but it will panic, because there isn't an initramfs providing a filesystem containing an init. preparing that will be the next step.</p>
+  </section>
+  <section>
+    <h3>notes on qemu</h3>
+    <p>i've seen some confusion online regarding qemu-emulated consoles and linux, so here is some demystification.</p>
+    <p>if linux doesn't get a <code>console=</code> command-line, it will first look for a VGA display to <code>printk</code> to, falling back to a serial port. <code>ttyS0</code> is the device for the first UART serial port recognized by linux. So with <code>-append "console=ttyS0"</code> you tell linux to print to only UART serial.</p>
+    <p>qemu's default mode (graphical) emulates a VGA display on the default starting view, and the qemu monitor and serial console are available on other views. if you only add <code>-append "console=ttyS0"</code>, then you will see seabios output in VGA and linux output in the serial console.</p>
+    <p>i definitely remember being confused by that, when i wasn't aware you could switch views with ctrl-alt-number. "my kernel isn't printing stuff even though i compiled in printk support!" well, by additionally passing <code>-nographic</code>, qemu will not emulate VGA and redirect the serial console to the tty or terminal emulator you started qemu with. in nographic mode, ctrl-a then c. in the monitor, type q/quit to exit.</p>
+  </section>
+  </article>
+  <nav>
+    <a href="../2/" style="float: right;">a barebones initramfs &raquo;</a>
+  </nav>
+  <hr>
+  <section id="fn">
+    <p id="fn1"><sup>1</sup> something something do keyboards attached to the motherboard talk ps/2 and does this configuration enable that, usb drivers necessary for external keyboards, how does the monitor hardware actually display characters, what character set, what keymap, how does anything work.</p>
+  </section>
+</main>
+</body>
+</html>

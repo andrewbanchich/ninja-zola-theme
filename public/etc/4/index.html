@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <title>devuan on the orange pi zero</title>
+  <meta name="viewport" content="width=device-width">
+  <link rel=icon href=data:,>
+  <link rel="stylesheet" href="../post.css">
+</head>
+<body>
+<main>
+  <article>
+    <header>
+      <h1>devuan on the orange pi zero</h1>
+      <time datetime="2019-05-15">may 15, 2019</time>
+    </header>
+    <p>i've started watching the single board computer scene again. in particular those based on the rk3399 soc (includes, among other things, six 64-bit arm cores!) look quite nice, especially with <a href="https://lwn.net/Articles/782655/">the mainlining of panfrost</a>, but i digress. i was inspired to take out my old orange pi zero, and slap a linux distribution onto it, for fun.</p>
+    <h3>the orange pi zero</h3>
+    <p>this sbc sports the allwinner h2+ soc, which includes 4 cortex-a7 cores (32-bit armv7-a). the 512 mb ddr3 memory cost me $8.5 + $4 shipping in late 2017 - the base price has since risen to $10.5 at the time of writing. for $4 more, there is the more recent orange pi zero plus, which is largely the same board with two welcome improvements: a wifi module that isn't the xr819 (more on this later), and the h5 soc (includes 4 cortex-a53 cores - 64-bit armv8-a).</p>
+    <h3>image bootstrapping</h3>
+    <p>armbian, the predominant community and distribution supporting most hobbyist sbcs, is too featureful for my needs. i am only concerned with running a headless, server-like linux system, with no reason other than for fun and amusement. thankfully, devuan <a href="https://mirror.math.princeton.edu/pub/devuan/devuan_ascii/embedded/">provides</a> images and bootloaders (u-boot) for some allwinner boards, including the orange pi zero.</p>
+    <p>once you've downloaded and verified the integrity of an image, burn it. for example:</p>
+    <pre>
+    xzcat devuan_ascii_2.0.0_armhf_sunxi.img.xz | sudo tee /dev/mmcblk0 > /dev/null</pre>
+    <p>then write the board-specific u-boot blob (devuan's sunxi image covers allwinner boards generically) starting at an 8 kb offset (this is <a href="http://linux-sunxi.org/Bootable_SD_card#SD_Card_Layout">where the SPL starts</a> for sd or emmc boot on allwinner boards). for example:</p>
+    <pre>
+    sudo dd if=orangepi_zero_defconfig.bin of=/dev/mmcblk0 bs=1024 seek=8</pre>
+    <p>note that the usual <code>conv=notrunc</code> is not needed, since it doesn't affect block devices.</p>
+    <p>finally, <code>sync</code> and remove the storage media. or wait - can't be bothered to walk all the way to the router with the board and your laptop and yada yada? then keep it in, and keep reading.</p>
+    <p>now xr819 works on armbian OOTB, but not on devuan - you'll have to <a href="https://github.com/fifteenhex/xradio">DIY</a>, which looks too scary for me. i have a few usb wifi adapters, most of them based on the mediatek mt7601u. in that case, download <a href="http://deb.debian.org/debian/pool/non-free/f/firmware-nonfree/firmware-nonfree_20161130.orig.tar.xz">debian's nonfree firmware</a>, mount the sd card, and copy the respective firmware over, for example:
+    <pre>
+    cp firmware-nonfree-20161130/mt7601u.bin /mnt/lib/firmware/</pre>
+    <p>the major downside to this approach is you exchange better wifi for the only remaining usb port (assuming the other one is being used for power).</p>
+    <h3>serial console</h3>
+    <p>conveniently, there is a 3-pin uart header next to the ethernet port, which i wired to a common pl2303-based usb-to-serial board with three dupont jumpers. watch dmesg when you plug it in to see what tty device it shows up as, then connect to it. in particular, i'm quite fond of <a href="https://github.com/tio/tio">tio</a>.</p>
+    <p>at long last, supply at least 1A @ 5V to the board and watch boot messages fly until you are greeted with login (root/toor)! proceed to connect to internet, install htop, and stare with admiration.</p>
+  </article>
+</main>
+</body>
+</html>

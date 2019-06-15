@@ -1,0 +1,30 @@
+execve("./a.out", ["./a.out", "jrl.ninja"], 0x7ffd8f66e418 /* 59 vars */) = 0
+arch_prctl(ARCH_SET_FS, 0x7f0caecb8c68) = 0
+set_tid_address(0x7f0caecb8ca8)         = 1865
+mprotect(0x7f0caecb5000, 4096, PROT_READ) = 0
+mprotect(0x555921f2b000, 4096, PROT_READ) = 0
+open("/etc/hosts", O_RDONLY|O_CLOEXEC)  = 3
+fcntl(3, F_SETFD, FD_CLOEXEC)           = 0
+read(3, "127.0.0.1 localhost\n", 1024)  = 20
+read(3, "", 1024)                       = 0
+close(3)                                = 0
+open("/etc/resolv.conf", O_RDONLY|O_CLOEXEC) = 3
+fcntl(3, F_SETFD, FD_CLOEXEC)           = 0
+read(3, "nameserver 127.0.0.1\n\n#nameserve"..., 248) = 248
+read(3, "", 248)                        = 0
+close(3)                                = 0
+socket(AF_INET, SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, IPPROTO_IP) = 3
+bind(3, {sa_family=AF_INET, sin_port=htons(0), sin_addr=inet_addr("0.0.0.0")}, 16) = 0
+sendto(3, "xE\1\0\0\1\0\0\0\0\0\0\3jrl\5ninja\0\0\1\0\1", 27, MSG_NOSIGNAL, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("127.0.0.1")}, 16) = 27
+sendto(3, "y_\1\0\0\1\0\0\0\0\0\0\3jrl\5ninja\0\0\34\0\1", 27, MSG_NOSIGNAL, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("127.0.0.1")}, 16) = 27
+poll([{fd=3, events=POLLIN}], 1, 2500)  = 1 ([{fd=3, revents=POLLIN}])
+recvfrom(3, "xE\201\240\0\1\0\4\0\0\0\1\3jrl\5ninja\0\0\1\0\1\300\f\0\1\0"..., 512, 0, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("127.0.0.1")}, [16]) = 128
+recvfrom(3, "y_\201\240\0\1\0\0\0\1\0\1\3jrl\5ninja\0\0\34\0\1\300\f\0\6\0"..., 512, 0, {sa_family=AF_INET, sin_port=htons(53), sin_addr=inet_addr("127.0.0.1")}, [16]) = 128
+close(3)                                = 0
+ioctl(1, TIOCGWINSZ, {ws_row=55, ws_col=160, ws_xpixel=1440, ws_ypixel=990}) = 0
+writev(1, [{iov_base="185.199.110.153", iov_len=15}, {iov_base="\n", iov_len=1}], 2) = 16
+writev(1, [{iov_base="185.199.111.153", iov_len=15}, {iov_base="\n", iov_len=1}], 2) = 16
+writev(1, [{iov_base="185.199.108.153", iov_len=15}, {iov_base="\n", iov_len=1}], 2) = 16
+writev(1, [{iov_base="185.199.109.153", iov_len=15}, {iov_base="\n", iov_len=1}], 2) = 16
+exit_group(0)                           = ?
++++ exited with 0 +++

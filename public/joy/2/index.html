@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <title>joyful dev log #2</title>
+  <meta name="viewport" content="width=device-width">
+  <link rel=icon href=data:,>
+  <link rel="stylesheet" href="../post.css">
+</head>
+<body>
+<main>
+  <header>
+    <h2>a barebones initramfs</h2>
+    <p>previously, a minimal linux kernel was compiled and booted with qemu, only to kernel panic. it wants an init! we can give it one with an initramfs.</p>
+  </header>
+  <article>
+  <section>
+    <h3>the initramfs and rootfs</h3>
+    <p>as implied by the name, an initramfs is a filesystem (containing an init) loaded by linux into memory. its intended purpose is to mount the real root filesystem, or rootfs, on disk. for example, this could involve loading the appropriate filesystem drivers, or the kernel modules necessary for encrypted lvm. when the rootfs's <code>/</code> is mounted, the real init is executed as pid 1 and life begins in userspace beyond the initramfs stage ("early" userspace).</p>
+    <p>the rootfs is typically installed on disk by means of a bootable live image, which provides utilities to customize the rootfs (e.g. set the timezone), partition disks, install a second stage bootloader<sup><a href="#fn1">1</a></sup>, and more.</p>
+    <p>some linux distributions get quite creative, and operate entirely in memory if their rootfs is small enough, at which point the line between initramfs and rootfs is blurred. as for optional persistence, there might be some special files on the removable media which also supplies the kernel + initramfs. also, some live cds and rescue linuxes have the option to load the entire rootfs into memory for additional snappiness.</p>
+    <p>anyways, to keep things simple for now, let's just remain in memory, and drop the user to a shell. we aren't yet concerned with building a rootfs right now, much less a full installation environment in a live cd.</p>
+  </section>
+  <section>
+    <h3>initramfs init</h3>
+    <p>at first, i considered statically compiling a small shell like <code>dash</code> and using that as the initramfs init, but then it occured to me that later down the line a proper initramfs would need utilities like <code>mount</code> and <code>modprobe</code>. the popular, easy solution is busybox (there is also klibc, which i may consider in the future).
+    <p>a minimal <code>/init</code> that meets our requirements:</p>
+<pre>
+    #!/bin/sh
+
+    printf %s\\n "hello!"
+    exec /bin/sh
+</pre>
+    <p>busybox can be statically compiled to support this init and nothing more with <code>make allnoconfig</code> and then enabling:</p>
+    <ul>
+      <li>static build</li>
+      <li>ash with printf builtin</li>
+    </ul>
+    <p>also, enabling coreutils <code>ls</code> is not necessary for an initramfs, but it would be nice to have that working once we shell in. semantically, an initramfs isn't interactive, and eventually we'll be moving such facilities to a rootfs.</p>
+    <p>again, alpine linux in docker is a nice compilation environment. <code>make gcc musl-dev linux-headers</code> are the necessary packages, and <code>ncurses-dev</code> for menuconfig.</p>
+  </section>
+  <section>
+    <h3>building the initramfs</h3>
+    <p>after making busybox, a <code>make install</code> will install it to <code>_install/</code>. if you copy <code>_install/{bin,sbin,usr}</code> to a fresh directory then add the init script, it is again quite painless in alpine (just install the <code>xz</code> package) to build the initramfs:</p>
+<pre>
+    chmod u+x init          && \
+    busybox find             | \
+    busybox cpio -ov -H newc | \
+    xz --check=crc32 > ../initramfs.cpio.xz
+</pre>
+    <p>now boot the kernel with it:</p>
+<pre>
+    qemu-system-x86_64 -kernel bzImage -initrd initramfs.cpio.xz
+</pre>
+  </section>
+  </article>
+  <nav>
+    <a href="../1/" style="float: left;">&laquo; a barebones linux kernel</a>
+    <a href="../3/" style="float: right;">a tiny bootable image &raquo;</a>
+  </nav>
+  <hr>
+  <section id="fn">
+    <p id="fn1"><sup>1</sup> as with all technology, there are caveats, and one worth mentioning here is if the kernel is compiled with efistub support, then a second stage bootloader is not necessary on uefi firmwares. well, <i>some uefi firmwares</i> - the implementation on my xps 13 9343 apparently cannot pass kernel command-lines, which is a total deal breaker, and so i have to load refind as second stage. but i digress.</p>
+  </section>
+</main>
+</body>
+</html>
