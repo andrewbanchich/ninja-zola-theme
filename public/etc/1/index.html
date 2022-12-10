@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <title>58 bytes of css to look great nearly everywhere</title>
+  <meta name="viewport" content="width=device-width">
+  <link rel=icon href=data:,>
+  <link rel="stylesheet" href="../post.css">
+</head>
+<body>
+<main>
+  <article>
+    <header>
+      <h1>58 bytes of css to look great nearly everywhere</h1>
+      <time datetime="2019-04-06">apr 6, 2019</time>
+    </header>
+    <p>when making this website, i wanted a simple, reasonable way to make it look good on most displays. not counting any minimization techniques, the following 58 bytes worked well for me:</p>
+<pre>
+main {
+  max-width: 38rem;
+  padding: 2rem;
+  margin: auto;
+}
+</pre>
+    <p>let's break this down.</p>
+    <h3><code>max-width: 38rem</code></h3>
+    <p>it appears that the default font size for most browsers is 16px, so 38rem is 608px. supporting 600px displays at a minimum seems reasonable.</p>
+    <h3><code>padding: 2rem</code></h3>
+    <p>if the display's width goes under 38rem, then this padding keeps things looking pretty good until around 256px. while this may seem optional, it actually hits two birds with one stone - the padding also provides sorely-needed top and bottom whitespace.</p>
+    <h3><code>margin: auto</code></h3>
+    <p>this is really all that is needed to center the page, because main is a block element under semantic html5.</p>
+    <hr>
+    <p>a key insight: it took me a surprising number of iterations to arrive at this point. perhaps that speaks to the fact that i know nothing about "modern" web development, or, as i'm more inclined to believe, just how hard it is to keep it simple in a world of complication.</p>
+    <p><b>update: </b>following some discussion (see footer), i've since changed the padding to 1.5rem for a happier compromise between mobile and desktop displays.</p>
+    <p><b>update 2: </b>the <code>ch</code> unit was brought to my attention <a href="https://www.reddit.com/r/css/comments/bb73cw/58_bytes_of_css_to_look_great_nearly_everywhere/ekj8yhm/">here</a>, and i quite like it! i've since changed to 70ch/2ch, which looks nearly the same with 2 less bytes, except that the padding is a little bit smaller (a good thing for mobile).</p>
+    <footer>
+    <p>discuss on <a href="https://news.ycombinator.com/item?id=19607169">hacker news</a></p>
+    </footer>
+  </article>
+</main>
+</body>
+</html>

@@ -1,0 +1,29 @@
+body {
+  font-family: Liberation Sans, Arial, sans-serif;
+  line-height: 1.4;
+}
+main {
+  max-width: 70ch;
+  padding: 2ch;
+  margin: auto;
+}
+article {
+  margin: 2rem 0;
+}
+nav {
+  height: 2rem;
+  font-size: 90%;
+}
+#fn {
+  font-size: 80%;
+}
+a {
+  text-decoration: none;
+  outline: 0;
+}
+a:hover {
+  text-decoration: underline;
+}
+::selection {
+  background-color: #fffaaa;
+}

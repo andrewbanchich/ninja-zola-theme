@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <title>from rsync to restic</title>
+  <meta name="viewport" content="width=device-width">
+  <link rel=icon href=data:,>
+  <link rel="stylesheet" href="../post.css">
+</head>
+<body>
+<main>
+  <article>
+    <header>
+      <h1>from rsync to restic</h1>
+      <time datetime="2019-06-01">jun 1, 2019</time>
+    </header>
+    <p>i've switched to using <a href="https://restic.net/">restic</a> for data backups, and so far have been very satisfied. before i get into my testimonial, let's take a look at how i previously approached backups.</p>
+    <h3>the data hierarchy</h3>
+    <p>i separate my data into hierarchical tiers of increasing size and decreasing importance. tier 1, the most important stuff, is a few gb large, and to back it up i would mount a handful of luks-encrypted storage media, and kick off rsync jobs. for me, rsync ticked a lot of boxes - it was fast (differential backup), it can use an "exclude file" containing globs such as <code>*.iso</code>, is solid software and widely available on many platforms, and can operate over the network for offsite backups.</p>
+    <p>tier 2 is mostly small multimedia (music collection, meme stash, and more) totalling a few 10's of gb. i delegated this to dropbox, where i have 100 gb of employee-gifted space. dropbox sync is functionally quite nice, and runs all the time, so naturally i should have also been including the most important tier 1, but some things in tier 1 are sensitive (e.g. private keys). fortunately, the sensitive parts don't change often, so i got by with occasionally running a script to tar and encrypt into a small blob in dropbox. also, tier 2 is rsync'd to storage media that has the capacity for it.</p>
+    <p>tier 3 is large multimedia (totally legit movies, anime, and youtube videos), and this tier isn't really backed up - i just move large files i get on my laptop over to one large external drive. as with the other tiers, i deliberately keep this quite small. it hovers at around a third of a tb, because i only keep the best of the best around.</p>
+    <p>so, my backup setup is quite simple and stress-free. i didn't really see the point of like, setting up automatic daily backups to a fancy and robust nas. i was pretty content with keeping the dropbox daemon running, and once a week or two i would do my rsync ritual.</p>
+    <h3>restic</h3>
+    <p>out of curiosity i also researched other backup solutions, and decided restic was worth trying out. it's written in golang, meaning static and cross-platform binaries. it has feature parity with what i needed from rsync. its repository model is dead simple, and a natural way to express my data hierarchy.</p>
+    <p>for me, the main benefit is in how restic approaches encryption. it's password based, per repository, and most critically is done at the file level, so restic repositories can be stored on many filesystems. this means i can easily and safely use untrusted and unencrypted storage media, and enjoy the leftover free space for other things. no more luks dependency and wasted space locked away in a partition!</p>
+    <p>restic also supports <a href="https://rclone.org/">rclone</a> at the command line syntax level, so with minimum cognitive overhead i can use dropbox as a totally untrusted store for tier 1 and 2 (and have one less daemon running on my machine), and other free and untrustworthy cloud storages for my tiny tier 1.</p>
+    <p>restic also comes with some added bonuses i am pleased with:</p>
+    <ul>
+      <li><b>deduplication</b> - i personally experienced a ~6 percent size reduction, which is nice</li>
+      <li><b>ux/progress feedback</b> - eta and erase-update progress bar is much better than rsync's text spew</li>
+      <li><b>repository mounting via fuse</b> - sort of a necessary feature, but still great nonetheless, and a display of the fuse abstraction at its best (decryption and assembly done transparently)</li>
+      <li><b>snapshots</b> - historically i have never needed to resurrect data in the past (never kept it with my rsync method anyways), but this may come in handy</li>
+    </ul>
+    <p>two thumbs up for restic!</p>
+  </article>
+</main>
+</body>
+</html>

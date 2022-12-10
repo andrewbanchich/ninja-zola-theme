@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+  <title>glibc getaddrinfo(3) and greener pastures</title>
+  <meta name="viewport" content="width=device-width">
+  <link rel=icon href=data:,>
+  <link rel="stylesheet" href="../post.css">
+</head>
+<body>
+<main>
+  <article>
+    <header>
+      <h1>glibc <code>getaddrinfo(3)</code> and greener pastures</h1>
+      <time datetime="2019-04-13">apr 13, 2019</time>
+    </header>
+    <p>recently, i've been trying to understand and further configure how my laptop does dns resolution (beyond an immutable <code>/etc/resolv.conf</code> pointing to cloudflare). naturally, i started wondering how linux userland does it.</p>
+    <p>most languages and things<sup><a href="#fn1">1</a></sup> boil down to wrapping a libc, and the posix-mandated library call of interest is <code>getaddrinfo(3)</code> (there is also <code>gethostbyname(3)</code>, but it is deprecated). i wrote and compiled <a href="getaddrinfo.c.txt" target="_blank">this</a>, linked against glibc 2.28, and immediately found myself lost in reading its <a href="strace-glibc-2.28.txt" target="_blank">strace</a>. on top of trying to load a bunch of configuration files and shared objects i didn't know existed, glibc pokes the unix domain socket <code>/var/run/ncsd/socket</code> twice!</p>
+    <p>what is ncsd? james will <a href="https://jameshfisher.com/2018/02/05/dont-use-nscd/">tell you all about it</a>. regardless, i don't think a libc should hardcode an application check like this. i get that dns caching is important, but it should be all or nothing for a libc. showing preference for a particular caching local resolver is not nothing, and is an abstraction at the mercy of ncsd and its whims.</p>
+    <p>then, i recompiled, this time linking against musl libc 1.1.21. look at the <a href="strace-musl-1.1.21.txt" target="_blank">strace</a>. LOOK AT IT! it's beautiful. i'm convinced this would be noticeably faster than glibc, but proper benchmarking is hard, so i won't be doing that.</p>
+    <p>there are also some languages that don't wrap around a libc, namely golang, which thankfully <a href="https://golang.org/src/net/dnsconfig_unix.go">honors</a> the <code>/etc/resolv.conf</code> convention. so out of curiosity, i also wrote <a href="getaddrinfo.go.txt" target="_blank">a functionally equivalent go program</a> (<code>go 1.12.3 linux/amd64</code>, build with <code>CGO_ENABLED=0</code> to ensure it uses go's resolver), and its <a href="strace-go-1.12.3.txt" target="_blank">strace</a> is a lot saner than the glibc one, although it still looks at more files than musl. (what is <code>/etc/mdns.allow</code>? i don't want to know.)</p>
+    <p>as an end user, <i>i just want to be able to reasonably understand my linux machine</i>. static lookup in <code>/etc/hosts</code> and resolver preferences in <code>/etc/resolv.conf</code> should be all there is to it, and musl seems to sympathize with me on this. i am also glad that golang, which is becoming more mainstream for networked stuff, is saner in this regard.</p>
+    <p>to tie loose ends: i settled on <a href="https://github.com/jedisct1/dnscrypt-proxy"><code>dnscrypt-proxy</code></a> as a local caching resolver, pointed <code>/etc/resolv.conf</code> to it (still immutable so other programs don't mess with it, as they like to do), and have never been happier.</p>
+    <hr>
+    <section id="fn">
+    <p id="fn1"><sup>1</sup> i also objdump'd some bind9 utilities like <code>host</code> and <code>dig</code>, and on my machine they use <code>bind9_getaddresses</code>, which calls <code>getaddrinfo</code> if <code>USE_GETADDRINFO</code>. presumably that is the case for however bind-tools is compiled by the official arch linux repositories, because the strace for <code>dig +short jrl.ninja</code> looked exactly like glibc <code>getaddrinfo</code>.</p>
+    </section>
+  </article>
+</main>
+</body>
+</html>
